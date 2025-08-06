@@ -1,117 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PoE2 Flips Dashboard v13</title>
+
+  <!-- Tailwind CSS or your preferred CSS framework -->
   <link rel="stylesheet" href="styles.css" />
+
+  <!-- API base configuration -->
+  <script>
+    // Set the API base URL for all frontend requests
+    window.__API_BASE__ = "https://poe2-api-live-v13.onrender.com";
+  </script>
 </head>
 <body>
-  <header class="topbar">
-    <h1>PoE2 Flips Dashboard <span class="pill">v13</span></h1>
-    <nav class="tabs">
-      <button class="tab active" data-tab="deals">Deals</button>
-      <button class="tab" data-tab="watchlist">Watchlist</button>
-      <button class="tab" data-tab="settings">Settings</button>
-    </nav>
+  <header>
+    <h1>PoE2 Flips Dashboard <span class="version">v13</span></h1>
   </header>
 
-  <main class="container">
-    <!-- DEALS TAB -->
-    <section id="tab-deals" class="tab-panel active">
-      <div class="controls">
-        <label>Search
-          <input id="q" type="text" placeholder="Item name, base, mod..." />
-        </label>
-        <label>Min Score
-          <input id="minScore" type="number" step="1" value="0" />
-        </label>
-        <label>Min Margin %
-          <input id="minMargin" type="number" step="1" value="0" />
-        </label>
-        <label>Limit
-          <input id="limit" type="number" step="1" value="30" />
-        </label>
-        <button id="refresh" class="btn">Refresh</button>
-        <span id="status" class="status">Idle</span>
-      </div>
-
-      <div class="table-wrap">
-        <table id="dealsTable">
-          <thead>
-            <tr>
-              <th>Item</th>
-              <th>Price</th>
-              <th>Est. Value</th>
-              <th>Margin %</th>
-              <th>Score</th>
-              <th>Seller</th>
-              <th>Age</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="dealsBody"></tbody>
-        </table>
-      </div>
+  <main>
+    <!-- Search / Filters -->
+    <section id="filters">
+      <input type="text" id="search" placeholder="Item name, base, mod..." />
+      <input type="number" id="minScore" placeholder="Min Score" value="0" />
+      <input type="number" id="minMargin" placeholder="Min Margin %" value="0" />
+      <input type="number" id="limit" placeholder="Limit" value="30" />
+      <button id="refresh">Refresh</button>
     </section>
 
-    <!-- WATCHLIST TAB -->
-    <section id="tab-watchlist" class="tab-panel">
-      <div class="table-wrap">
-        <table id="watchTable">
-          <thead>
-            <tr>
-              <th>Item</th>
-              <th>Last Seen</th>
-              <th>Notes</th>
-              <th>Remove</th>
-            </tr>
-          </thead>
-          <tbody id="watchBody"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- SETTINGS TAB -->
-    <section id="tab-settings" class="tab-panel">
-      <div class="settings">
-        <div class="setting-row">
-          <label>API Base</label>
-          <input id="apiBase" type="text" readonly />
-          <small>Set in code for v13. Changeable in a later version.</small>
-        </div>
-
-        <div class="setting-row">
-          <label>Auto-Refresh</label>
-          <input id="autoRefresh" type="checkbox" />
-        </div>
-
-        <div class="setting-row">
-          <label>Refresh Interval (sec)</label>
-          <input id="intervalSec" type="number" step="1" value="30" min="5" />
-        </div>
-
-        <div class="setting-row">
-          <label>Discord Alerts (off in v13)</label>
-          <input type="text" placeholder="Webhook URL (disabled)" disabled />
-        </div>
-
-        <div class="setting-actions">
-          <button id="saveSettings" class="btn">Save Settings</button>
-          <span id="saveStatus" class="status">Not saved</span>
-        </div>
-      </div>
+    <!-- Deals Table -->
+    <section id="deals">
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Price</th>
+            <th>Est. Value</th>
+            <th>Margin %</th>
+            <th>Score</th>
+            <th>Seller</th>
+            <th>Age</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="deals-body">
+          <tr>
+            <td colspan="8">No data loaded yet.</td>
+          </tr>
+        </tbody>
+      </table>
     </section>
   </main>
 
-  <footer class="footer">
-    <span id="footStatus">Ready</span>
+  <footer>
+    <p>Last refresh: <span id="last-refresh">never</span></p>
   </footer>
 
-  <script>
-    // v13 preset
-    window.__API_BASE__ = "https://poe2-api-live-v13.onrender.com";
-  </script>
+  <!-- Main App Script -->
   <script src="app.js"></script>
 </body>
 </html>
