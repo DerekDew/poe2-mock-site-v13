@@ -5,42 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PoE2 Flips Dashboard v13</title>
     <style>
-        body { background-color: #121212; color: #fff; font-family: Arial, sans-serif; }
+        body { background-color: #121212; color: #fff; font-family: Arial, sans-serif; padding: 20px; }
         .tabs { display: flex; margin-bottom: 10px; }
         .tab { padding: 10px; cursor: pointer; background: #333; margin-right: 5px; border-radius: 5px; }
         .tab.active { background: #28a745; }
         .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        .tab-content.active { display: block; margin-bottom: 15px; }
         input, button { padding: 8px; margin: 5px; border-radius: 4px; border: none; }
         button { background: #28a745; color: #fff; cursor: pointer; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 10px; border-bottom: 1px solid #444; }
         th { background: #222; }
+        #errorMessage { color: #ff5555; margin-top: 10px; }
     </style>
+
+    <!-- API Base -->
+    <script>
+        window.__API_BASE__ = "https://poe2-api-live-v13.onrender.com";
+    </script>
 </head>
 <body>
 
     <h1>PoE2 Flips Dashboard <span style="font-size:14px;">v13</span></h1>
 
+    <!-- Tabs -->
     <div class="tabs">
         <div class="tab active" onclick="switchTab('quick')">Quick Search</div>
         <div class="tab" onclick="switchTab('url')">Search by Trade URL</div>
     </div>
 
-    <!-- Quick Search Tab -->
+    <!-- Quick Search -->
     <div id="tab-quick" class="tab-content active">
         <input type="text" id="itemName" placeholder="Enter Item Name (e.g., Sapphire Ring)">
         <input type="number" id="limitQuick" placeholder="Limit" value="10">
         <button onclick="fetchQuickSearch()">Search</button>
     </div>
 
-    <!-- URL Search Tab -->
+    <!-- URL Search -->
     <div id="tab-url" class="tab-content">
         <input type="text" id="tradeUrl" placeholder="Paste PoE2 trade search URL here">
         <input type="number" id="limitUrl" placeholder="Limit" value="10">
         <button onclick="fetchUrlSearch()">Search</button>
     </div>
 
+    <!-- Error Message -->
+    <div id="errorMessage"></div>
+
+    <!-- Results Table -->
     <table id="resultsTable">
         <thead>
             <tr>
@@ -55,40 +66,60 @@
     </table>
 
     <script>
-        const API_BASE = "https://poe2-api-live-v13.onrender.com";
+        const API_BASE = window.__API_BASE__;
 
         function switchTab(tab) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active');
             document.querySelector(`#tab-${tab}`).classList.add('active');
+            document.getElementById('errorMessage').textContent = '';
         }
 
         async function fetchQuickSearch() {
-            const item = encodeURIComponent(document.getElementById('itemName').value.trim());
+            const item = document.getElementById('itemName').value.trim();
             const limit = document.getElementById('limitQuick').value;
-            if (!item) return alert("Please enter an item name.");
-            const res = await fetch(`${API_BASE}/deals?item=${item}&limit=${limit}`);
-            const data = await res.json();
-            renderTable(data.items || []);
+            if (!item) return showError("Please enter an item name.");
+
+            try {
+                const res = await fetch(`${API_BASE}/deals?item=${encodeURIComponent(item)}&limit=${limit}`);
+                const data = await res.json();
+                handleResponse(data);
+            } catch (err) {
+                showError("Error fetching Quick Search results.");
+            }
         }
 
         async function fetchUrlSearch() {
-            const url = encodeURIComponent(document.getElementById('tradeUrl').value.trim());
+            const url = document.getElementById('tradeUrl').value.trim();
             const limit = document.getElementById('limitUrl').value;
-            if (!url) return alert("Please paste a trade search URL.");
-            const res = await fetch(`${API_BASE}/deals_by_url?url=${url}&limit=${limit}`);
-            const data = await res.json();
-            renderTable(data.items || []);
+            if (!url) return showError("Please paste a trade search URL.");
+
+            try {
+                const res = await fetch(`${API_BASE}/deals_by_url?url=${encodeURIComponent(url)}&limit=${limit}`);
+                const data = await res.json();
+                handleResponse(data);
+            } catch (err) {
+                showError("Error fetching URL Search results.");
+            }
+        }
+
+        function handleResponse(data) {
+            if (data.error) {
+                showError(`Backend error: ${data.error}${data.details ? " - " + data.details : ""}`);
+                renderTable([]);
+            } else if (!data.items || data.items.length === 0) {
+                showError("No results found.");
+                renderTable([]);
+            } else {
+                showError('');
+                renderTable(data.items);
+            }
         }
 
         function renderTable(items) {
             const tbody = document.querySelector('#resultsTable tbody');
             tbody.innerHTML = "";
-            if (!items.length) {
-                tbody.innerHTML = `<tr><td colspan="5">No results found.</td></tr>`;
-                return;
-            }
             items.forEach(item => {
                 const row = `
                     <tr>
@@ -101,6 +132,10 @@
                 `;
                 tbody.innerHTML += row;
             });
+        }
+
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
         }
     </script>
 
