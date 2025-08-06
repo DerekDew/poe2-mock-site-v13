@@ -1,63 +1,108 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PoE2 Flips Dashboard v13</title>
-
-  <!-- Tailwind CSS or your preferred CSS framework -->
-  <link rel="stylesheet" href="styles.css" />
-
-  <!-- API base configuration -->
-  <script>
-    // Set the API base URL for all frontend requests
-    window.__API_BASE__ = "https://poe2-api-live-v13.onrender.com";
-  </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PoE2 Flips Dashboard v13</title>
+    <style>
+        body { background-color: #121212; color: #fff; font-family: Arial, sans-serif; }
+        .tabs { display: flex; margin-bottom: 10px; }
+        .tab { padding: 10px; cursor: pointer; background: #333; margin-right: 5px; border-radius: 5px; }
+        .tab.active { background: #28a745; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        input, button { padding: 8px; margin: 5px; border-radius: 4px; border: none; }
+        button { background: #28a745; color: #fff; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 10px; border-bottom: 1px solid #444; }
+        th { background: #222; }
+    </style>
 </head>
 <body>
-  <header>
-    <h1>PoE2 Flips Dashboard <span class="version">v13</span></h1>
-  </header>
 
-  <main>
-    <!-- Search / Filters -->
-    <section id="filters">
-      <input type="text" id="search" placeholder="Item name, base, mod..." />
-      <input type="number" id="minScore" placeholder="Min Score" value="0" />
-      <input type="number" id="minMargin" placeholder="Min Margin %" value="0" />
-      <input type="number" id="limit" placeholder="Limit" value="30" />
-      <button id="refresh">Refresh</button>
-    </section>
+    <h1>PoE2 Flips Dashboard <span style="font-size:14px;">v13</span></h1>
 
-    <!-- Deals Table -->
-    <section id="deals">
-      <table>
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('quick')">Quick Search</div>
+        <div class="tab" onclick="switchTab('url')">Search by Trade URL</div>
+    </div>
+
+    <!-- Quick Search Tab -->
+    <div id="tab-quick" class="tab-content active">
+        <input type="text" id="itemName" placeholder="Enter Item Name (e.g., Sapphire Ring)">
+        <input type="number" id="limitQuick" placeholder="Limit" value="10">
+        <button onclick="fetchQuickSearch()">Search</button>
+    </div>
+
+    <!-- URL Search Tab -->
+    <div id="tab-url" class="tab-content">
+        <input type="text" id="tradeUrl" placeholder="Paste PoE2 trade search URL here">
+        <input type="number" id="limitUrl" placeholder="Limit" value="10">
+        <button onclick="fetchUrlSearch()">Search</button>
+    </div>
+
+    <table id="resultsTable">
         <thead>
-          <tr>
-            <th>Item</th>
-            <th>Price</th>
-            <th>Est. Value</th>
-            <th>Margin %</th>
-            <th>Score</th>
-            <th>Seller</th>
-            <th>Age</th>
-            <th>Actions</th>
-          </tr>
+            <tr>
+                <th>Item</th>
+                <th>Price</th>
+                <th>Seller</th>
+                <th>Listed</th>
+                <th>Link</th>
+            </tr>
         </thead>
-        <tbody id="deals-body">
-          <tr>
-            <td colspan="8">No data loaded yet.</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-  </main>
+        <tbody></tbody>
+    </table>
 
-  <footer>
-    <p>Last refresh: <span id="last-refresh">never</span></p>
-  </footer>
+    <script>
+        const API_BASE = "https://poe2-api-live-v13.onrender.com";
 
-  <!-- Main App Script -->
-  <script src="app.js"></script>
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active');
+            document.querySelector(`#tab-${tab}`).classList.add('active');
+        }
+
+        async function fetchQuickSearch() {
+            const item = encodeURIComponent(document.getElementById('itemName').value.trim());
+            const limit = document.getElementById('limitQuick').value;
+            if (!item) return alert("Please enter an item name.");
+            const res = await fetch(`${API_BASE}/deals?item=${item}&limit=${limit}`);
+            const data = await res.json();
+            renderTable(data.items || []);
+        }
+
+        async function fetchUrlSearch() {
+            const url = encodeURIComponent(document.getElementById('tradeUrl').value.trim());
+            const limit = document.getElementById('limitUrl').value;
+            if (!url) return alert("Please paste a trade search URL.");
+            const res = await fetch(`${API_BASE}/deals_by_url?url=${url}&limit=${limit}`);
+            const data = await res.json();
+            renderTable(data.items || []);
+        }
+
+        function renderTable(items) {
+            const tbody = document.querySelector('#resultsTable tbody');
+            tbody.innerHTML = "";
+            if (!items.length) {
+                tbody.innerHTML = `<tr><td colspan="5">No results found.</td></tr>`;
+                return;
+            }
+            items.forEach(item => {
+                const row = `
+                    <tr>
+                        <td>${item.name || item.baseType || "Unknown"}</td>
+                        <td>${item.price} ${item.currency}</td>
+                        <td>${item.seller || "Unknown"}</td>
+                        <td>${item.listedAt || "Unknown"}</td>
+                        <td><a href="${item.tradeUrl}" target="_blank">View</a></td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+    </script>
+
 </body>
 </html>
